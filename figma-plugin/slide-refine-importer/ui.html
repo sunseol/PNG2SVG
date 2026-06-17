@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>SlideRefine Importer</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #ffffff;
+        --panel: #f6f6f7;
+        --ink: #111111;
+        --muted: #63636b;
+        --line: #e5e5e8;
+        --accent: #ff6b00;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #171719;
+          --panel: #222327;
+          --ink: #f5f5f6;
+          --muted: #b7b7bd;
+          --line: #34363b;
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font: 13px/1.45 Inter, system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+      }
+
+      .app {
+        display: grid;
+        gap: 14px;
+        padding: 16px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 14px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 16px;
+        line-height: 1.2;
+      }
+
+      h2 {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+
+      .lead {
+        color: var(--muted);
+        margin-top: 6px;
+      }
+
+      .file-picker {
+        display: grid;
+        gap: 10px;
+      }
+
+      input[type="file"] {
+        width: 100%;
+      }
+
+      .mode-grid {
+        display: grid;
+        gap: 8px;
+      }
+
+      label.mode {
+        display: grid;
+        gap: 4px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px 12px;
+        background: var(--bg);
+        cursor: pointer;
+      }
+
+      label.mode:has(input:checked) {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px var(--accent);
+      }
+
+      label.mode input {
+        margin: 0 8px 0 0;
+      }
+
+      .mode-title {
+        font-weight: 600;
+      }
+
+      .mode-desc,
+      .meta,
+      .summary {
+        color: var(--muted);
+      }
+
+      .checks {
+        display: grid;
+        gap: 8px;
+      }
+
+      .checks label {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+      }
+
+      .summary-list {
+        display: grid;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .summary-item {
+        border-top: 1px solid var(--line);
+        padding-top: 8px;
+      }
+
+      .actions {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 999px;
+        padding: 10px 14px;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      button.primary {
+        background: var(--accent);
+        color: white;
+        min-width: 140px;
+      }
+
+      button.secondary {
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid var(--line);
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <div class="panel">
+        <h1>SlideRefine Importer</h1>
+        <p class="lead">
+          Import a single <code>figma-import.json</code> file and create Figma frames using
+          the recommended vector or hybrid-safe strategy.
+        </p>
+      </div>
+
+      <div class="panel file-picker">
+        <h2>Package File</h2>
+        <input id="import-file" type="file" accept=".json,application/json" />
+        <p id="file-meta" class="meta">No package selected.</p>
+      </div>
+
+      <div class="panel">
+        <h2>Import Mode</h2>
+        <div class="mode-grid">
+          <label class="mode">
+            <span><input type="radio" name="mode" value="recommended" checked /> <span class="mode-title">Recommended</span></span>
+            <span class="mode-desc">Use SlideRefine's per-slide recommendation.</span>
+          </label>
+          <label class="mode">
+            <span><input type="radio" name="mode" value="vector" /> <span class="mode-title">Editable Text</span></span>
+            <span class="mode-desc">Keep visual details as movable raster groups, then place editable text on top.</span>
+          </label>
+          <label class="mode">
+            <span><input type="radio" name="mode" value="hybrid-safe" /> <span class="mode-title">Hybrid Safe</span></span>
+            <span class="mode-desc">Preserve the visible design with a locked raster base and editable guides.</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Options</h2>
+        <div class="checks">
+          <label>
+            <input id="create-text-drafts" type="checkbox" checked />
+            <span>Create editable text drafts. In vector mode they are visible; in hybrid-safe mode they stay hidden.</span>
+          </label>
+          <label>
+            <input id="attach-hidden-reference" type="checkbox" checked />
+            <span>In vector mode, attach a hidden raster reference for visual comparison.</span>
+          </label>
+          <label>
+            <input id="include-hidden-vector" type="checkbox" checked />
+            <span>In hybrid mode, attach a hidden editable vector candidate.</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Summary</h2>
+        <p id="summary" class="summary">Load a package to inspect slide profiles and recommendations.</p>
+        <div id="summary-list" class="summary-list"></div>
+      </div>
+
+      <div class="actions">
+        <button id="cancel" class="secondary" type="button">Close</button>
+        <button id="import" class="primary" type="button" disabled>Import Package</button>
+      </div>
+    </div>
+
+    <script>
+      const fileInput = document.getElementById("import-file");
+      const fileMeta = document.getElementById("file-meta");
+      const summary = document.getElementById("summary");
+      const summaryList = document.getElementById("summary-list");
+      const importButton = document.getElementById("import");
+      const cancelButton = document.getElementById("cancel");
+
+      let packageData = null;
+
+      function getMode() {
+        return document.querySelector('input[name="mode"]:checked').value;
+      }
+
+      function getAnalysisProfile(slide) {
+        if (!slide || !slide.analysis) {
+          return "unknown";
+        }
+        return slide.analysis.profile || "unknown";
+      }
+
+      function renderSummary(data) {
+        const slides = data.slides || [];
+        summary.textContent = `${slides.length} slide${slides.length > 1 ? "s" : ""} ready for import.`;
+        summaryList.innerHTML = "";
+        for (const slide of slides) {
+          const item = document.createElement("div");
+          item.className = "summary-item";
+          const recommended = slide.recommended_mode || "vector";
+          const textCount = (slide.text_candidates || []).length;
+          item.innerHTML = `
+            <div><strong>${slide.name}</strong></div>
+            <div class="meta">Profile: ${getAnalysisProfile(slide)} | Recommended: ${recommended}</div>
+            <div class="meta">Canvas: ${slide.canvas.width} × ${slide.canvas.height} | Text candidates: ${textCount}</div>
+          `;
+          summaryList.appendChild(item);
+        }
+      }
+
+      function validatePackage(data) {
+        return Boolean(
+          data &&
+          data.format &&
+          data.format.name === "slide-refine-figma-import" &&
+          Array.isArray(data.slides) &&
+          data.slides.length
+        );
+      }
+
+      fileInput.addEventListener("change", async (event) => {
+        packageData = null;
+        importButton.disabled = true;
+        summary.textContent = "Load a package to inspect slide profiles and recommendations.";
+        summaryList.innerHTML = "";
+
+        const files = event.target && event.target.files ? event.target.files : null;
+        const file = files && files.length ? files[0] : null;
+        if (!file) {
+          fileMeta.textContent = "No package selected.";
+          return;
+        }
+
+        fileMeta.textContent = `${file.name} · ${(file.size / 1024).toFixed(1)} KB`;
+        try {
+          const text = await file.text();
+          const parsed = JSON.parse(text);
+          if (!validatePackage(parsed)) {
+            throw new Error("Unsupported package format. Select SlideRefine figma-import.json.");
+          }
+          packageData = parsed;
+          renderSummary(parsed);
+          importButton.disabled = false;
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          fileMeta.textContent = `Failed to load package: ${message}`;
+        }
+      });
+
+      cancelButton.addEventListener("click", () => {
+        parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");
+      });
+
+      importButton.addEventListener("click", () => {
+        if (!packageData) return;
+        parent.postMessage(
+          {
+            pluginMessage: {
+              type: "import-package",
+              payload: {
+                packageData,
+                mode: getMode(),
+                createTextDrafts: document.getElementById("create-text-drafts").checked,
+                attachHiddenReference: document.getElementById("attach-hidden-reference").checked,
+                includeHiddenVectorCandidate: document.getElementById("include-hidden-vector").checked,
+              },
+            },
+          },
+          "*"
+        );
+      });
+    </script>
+  </body>
+</html>
