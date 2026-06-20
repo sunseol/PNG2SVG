@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sliderefine.local/schema/cli-result.schema.json",
+  "title": "SlideRefine CLI Result",
+  "type": "object",
+  "required": ["apiVersion", "status", "command"],
+  "additionalProperties": true,
+  "properties": {
+    "apiVersion": { "const": "sliderefine.cli/v1" },
+    "status": { "enum": ["ok", "error"] },
+    "command": { "type": "string" },
+    "code": { "type": "string" },
+    "message": { "type": "string" }
+  }
+}

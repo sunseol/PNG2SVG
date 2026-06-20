@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SlideRefine Editor</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main id="app" data-editor-shell="true">
+      <aside class="sidebar" aria-label="Slides and layers">
+        <div class="brand">SlideRefine</div>
+        <div class="toolbar" role="toolbar" aria-label="Document commands">
+          <button id="openSample" type="button">Open</button>
+          <button id="saveDocument" type="button">Save</button>
+          <button id="exportSvg" type="button">SVG</button>
+          <button id="exportPng" type="button">PNG</button>
+        </div>
+        <label class="field">
+          <span>Slide</span>
+          <select id="slideSelect"></select>
+        </label>
+        <ol id="layerList" class="layers" aria-label="Layer list"></ol>
+      </aside>
+
+      <section class="workspace" aria-label="Canvas workspace">
+        <div class="canvas-toolbar" role="toolbar" aria-label="Editing tools">
+          <button id="selectTool" type="button" aria-pressed="true">Select</button>
+          <button id="undo" type="button">Undo</button>
+          <button id="redo" type="button">Redo</button>
+          <label class="overlay-control">
+            <span>Overlay</span>
+            <input id="overlayOpacity" type="range" min="0" max="1" step="0.1" value="0.2" />
+          </label>
+          <label class="overlay-control checkbox-inline">
+            <span>Low confidence</span>
+            <input id="confidenceFilter" type="checkbox" />
+          </label>
+          <label class="overlay-control threshold-control">
+            <span>Below</span>
+            <input id="confidenceThreshold" type="number" min="0" max="1" step="0.05" value="0.8" />
+          </label>
+        </div>
+        <div id="canvasHost" class="canvas-host"></div>
+      </section>
+
+      <aside class="inspector" aria-label="Inspector">
+        <h1 id="nodeName">No selection</h1>
+        <label class="field">
+          <span>Text</span>
+          <textarea id="textValue" rows="4"></textarea>
+        </label>
+        <div class="grid2">
+          <label class="field"><span>X</span><input id="xValue" type="number" step="1" /></label>
+          <label class="field"><span>Y</span><input id="yValue" type="number" step="1" /></label>
+        </div>
+        <div class="grid2">
+          <label class="field"><span>Width</span><input id="widthValue" type="number" step="1" /></label>
+          <label class="field"><span>Height</span><input id="heightValue" type="number" step="1" /></label>
+        </div>
+        <label class="field"><span>Rotation</span><input id="rotationValue" type="number" step="1" /></label>
+        <div class="grid2">
+          <label class="field"><span>Fill</span><input id="fillValue" type="color" /></label>
+          <label class="field"><span>Stroke</span><input id="strokeValue" type="color" /></label>
+        </div>
+        <div class="grid2">
+          <label class="field"><span>Opacity</span><input id="opacityValue" type="number" min="0" max="1" step="0.1" /></label>
+          <label class="field"><span>Visible</span><input id="visibleValue" type="checkbox" /></label>
+        </div>
+        <label class="field checkbox-field"><span>Locked</span><input id="lockedValue" type="checkbox" /></label>
+        <div class="toolbar">
+          <button id="sendBackward" type="button">Back</button>
+          <button id="bringForward" type="button">Front</button>
+          <button id="groupNodes" type="button">Group</button>
+          <button id="ungroupNode" type="button">Ungroup</button>
+          <button id="duplicateNode" type="button">Duplicate</button>
+          <button id="deleteNode" type="button">Delete</button>
+        </div>
+        <pre id="status" class="status"></pre>
+      </aside>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

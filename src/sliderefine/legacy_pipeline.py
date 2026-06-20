@@ -32,6 +32,7 @@ IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".webp"}
 SVG_GUIDE_STROKE = "#ff6b00"
 OCR_ENGINE_CHOICES = ("auto", "windows", "none")
 EDITABLE_TEXT_STATUSES = {"usable", "usable_corrected", "needs_review"}
+WINDOWS_OCR_TIMEOUT_SECONDS = 10.0
 OCR_TEXT_REPLACEMENTS = (
     ("타사人", "탄산수"),
     ("타사수", "탄산수"),
@@ -581,7 +582,7 @@ def score_ocr_candidates(candidates: list[dict]) -> int:
     return score
 
 
-def detect_windows_ocr_candidates(image: Image.Image) -> list[dict]:
+def detect_windows_ocr_candidates(image: Image.Image, timeout_seconds: float = WINDOWS_OCR_TIMEOUT_SECONDS) -> list[dict]:
     script = build_windows_ocr_script()
     language_tags = ("ko", "en-US")
     best_candidates: list[dict] = []
@@ -598,23 +599,27 @@ def detect_windows_ocr_candidates(image: Image.Image) -> list[dict]:
         image.convert("RGBA").save(temp_path, format="PNG")
 
         for language_tag in language_tags:
-            completed = subprocess.run(
-                [
-                    "powershell",
-                    "-NoProfile",
-                    "-ExecutionPolicy",
-                    "Bypass",
-                    "-File",
-                    str(script_path),
-                    str(temp_path),
-                    language_tag,
-                ],
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                check=False,
-            )
+            try:
+                completed = subprocess.run(
+                    [
+                        "powershell",
+                        "-NoProfile",
+                        "-ExecutionPolicy",
+                        "Bypass",
+                        "-File",
+                        str(script_path),
+                        str(temp_path),
+                        language_tag,
+                    ],
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    check=False,
+                    timeout=timeout_seconds,
+                )
+            except subprocess.TimeoutExpired:
+                continue
             if completed.returncode != 0:
                 continue
 

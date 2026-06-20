@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sliderefine"
+version = "0.1.0"
+description = "Independent PNG/PPTX to editable SlideRefine scene document converter."
+readme = "README.md"
+license = "LicenseRef-Proprietary"
+license-files = ["LICENSE", "NOTICE"]
+requires-python = ">=3.11"
+dependencies = [
+  "numpy<2",
+  "opencv-python-headless<4.10",
+  "Pillow",
+]
+
+[project.optional-dependencies]
+dev = ["jsonschema", "mypy", "pip-audit", "pytest", "ruff"]
+server = []
+mcp = []
+
+[project.scripts]
+sliderefine = "sliderefine.cli.main:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+sliderefine = ["server/web/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+check_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = "sliderefine.legacy_pipeline"
+ignore_errors = true

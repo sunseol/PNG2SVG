@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0",
+  "operationId": "op-edit-title-fixture",
+  "expectedRevision": 1,
+  "operations": [
+    {
+      "type": "translate",
+      "nodeIds": ["image-963190ca41535fa3"],
+      "dx": 2,
+      "dy": 2
+    }
+  ]
+}

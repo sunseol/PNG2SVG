@@ -1,0 +1,191 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SlideRefine Local Editor API",
+    "version": "0.1.0",
+    "description": "Loopback-only HTTP API used by the SlideRefine local web editor."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:{port}",
+      "variables": {
+        "port": {
+          "default": "0"
+        }
+      }
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "SlideRefineToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-sliderefine-token"
+      }
+    },
+    "schemas": {
+      "Status": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["ok", "error"]
+          },
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "OperationTransaction": {
+        "$ref": "./operations.schema.json"
+      },
+      "SceneDocument": {
+        "$ref": "./document.schema.json"
+      }
+    }
+  },
+  "security": [
+    {
+      "SlideRefineToken": []
+    }
+  ],
+  "paths": {
+    "/api/v1/capabilities": {
+      "get": {
+        "operationId": "getCapabilities",
+        "responses": {
+          "200": {
+            "description": "Supported operation names and current revision."
+          }
+        }
+      }
+    },
+    "/api/v1/documents/current": {
+      "get": {
+        "operationId": "getCurrentDocument",
+        "responses": {
+          "200": {
+            "description": "Current Scene Document.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SceneDocument"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "saveCurrentDocument",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SceneDocument"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document saved."
+          }
+        }
+      }
+    },
+    "/api/v1/documents/current/operations": {
+      "post": {
+        "operationId": "applyCurrentDocumentOperations",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OperationTransaction"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operation transaction applied."
+          },
+          "400": {
+            "description": "Rejected transaction."
+          }
+        }
+      }
+    },
+    "/api/v1/documents/current/render": {
+      "post": {
+        "operationId": "renderCurrentDocument",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "slideId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rendered PNG preview URI."
+          }
+        }
+      }
+    },
+    "/api/v1/documents/current/export": {
+      "post": {
+        "operationId": "exportCurrentDocument",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["format"],
+                "properties": {
+                  "format": {
+                    "type": "string",
+                    "enum": ["svg", "png"]
+                  },
+                  "slideId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Export artifact URI."
+          }
+        }
+      }
+    },
+    "/api/v1/documents/current/validate": {
+      "post": {
+        "operationId": "validateCurrentDocument",
+        "responses": {
+          "200": {
+            "description": "Validation report."
+          }
+        }
+      }
+    }
+  }
+}
