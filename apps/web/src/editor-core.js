@@ -338,7 +338,7 @@ ${body}
 
 export function renderNode(document, node, selected = new Set()) {
   if (!node || node.visible === false) return "";
-  const common = `class="node" data-node-id="${escapeAttr(node.id)}" aria-selected="${selected.has(node.id) ? "true" : "false"}" transform="${nodeTransform(node)}" opacity="${node.opacity ?? 1}"`;
+  const common = `class="node" data-node-id="${escapeAttr(node.id)}" data-node-type="${escapeAttr(node.type)}" aria-selected="${selected.has(node.id) ? "true" : "false"}" transform="${nodeTransform(node)}" opacity="${node.opacity ?? 1}"`;
   const b = node.bounds || { x: 0, y: 0, width: 0, height: 0 };
   if (node.type === "group") {
     const children = (node.children || []).map((childId) => renderNode(document, document.nodes[childId], selected)).join("\n");
@@ -356,6 +356,11 @@ export function renderNode(document, node, selected = new Set()) {
   if (node.type === "text") {
     const style = node.style || {};
     return `<text ${common} x="0" y="${style.fontSize || 16}" fill="${escapeAttr(fillColor(node))}" font-family="${escapeAttr(style.fontFamily || "Arial")}" font-size="${style.fontSize || 16}" font-weight="${escapeAttr(style.fontWeight || 400)}">${escapeText(node.text || "")}</text>`;
+  }
+  if (node.type === "image") {
+    const href = assetHref(document, node);
+    if (!href) return "";
+    return `<image ${common} width="${b.width}" height="${b.height}" href="${escapeAttr(href)}"></image>`;
   }
   return "";
 }
@@ -378,6 +383,11 @@ function fillColor(node) {
 function strokeAttrs(node) {
   if (!node.stroke?.color) return "";
   return `stroke="${escapeAttr(node.stroke.color)}" stroke-width="${Number(node.stroke.width || 1)}"`;
+}
+
+function assetHref(document, node) {
+  const asset = document.assets?.[node.assetId];
+  return asset?.dataUri || asset?.uri || "";
 }
 
 function escapeAttr(value) {

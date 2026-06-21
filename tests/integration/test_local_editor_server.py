@@ -126,6 +126,19 @@ def test_local_editor_import_upload_replaces_current_document(fixture_image: Pat
         assert imported["revision"] == 1
         assert imported["document"]["assets"]
         assert imported["sourceName"].endswith("fresh-upload.png")
+        image_nodes = [node for node in imported["document"]["nodes"].values() if node["type"] == "image"]
+        source_image = next(node for node in image_nodes if node.get("reason") == "original_overlay")
+        assert source_image["visible"] is True
+        assert source_image["locked"] is False
+        assert source_image["opacity"] == 1.0
+        assert imported["document"]["assets"][source_image["assetId"]]["dataUri"].startswith("data:image/png;base64,")
+        hidden_vectors = [
+            node
+            for node in imported["document"]["nodes"].values()
+            if node["type"] == "path" and node["provenance"]["stage"] == "shape_reconstruction"
+        ]
+        assert hidden_vectors
+        assert all(node["visible"] is False for node in hidden_vectors)
 
         exported = request_json(
             f"{base}/api/v1/documents/current/export",

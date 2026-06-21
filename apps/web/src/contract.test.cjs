@@ -42,6 +42,28 @@ const { pathToFileURL } = require("url");
     throw new Error("SVG export contract failed");
   }
 
+  const imageDocument = core.clone(documentState);
+  imageDocument.assets["asset-photo"] = { id: "asset-photo", mimeType: "image/png", dataUri: "data:image/png;base64,AA==" };
+  imageDocument.slides["slide-001"].children.unshift("image-photo");
+  imageDocument.nodes["image-photo"] = {
+    id: "image-photo",
+    type: "image",
+    name: "Photo",
+    parentId: "slide-001",
+    transform: [1, 0, 0, 1, 0, 0],
+    opacity: 1,
+    visible: true,
+    locked: false,
+    bounds: { x: 0, y: 0, width: 640, height: 360 },
+    assetId: "asset-photo",
+    provenance: { stage: "contract", engine: "web", sourceRegionId: "image-photo", confidence: 1 },
+    extensions: {}
+  };
+  const imageSvg = core.renderDocumentSvg(imageDocument, "slide-001");
+  if (!imageSvg.includes("<image") || !imageSvg.includes("data:image/png;base64,AA==")) {
+    throw new Error("Image nodes are not rendered in the web studio");
+  }
+
   const hostile = core.createSampleDocument();
   hostile.slides["slide-001"].name = "Slide <script>";
   hostile.nodes["text-title"].id = "text-title\"><script>";

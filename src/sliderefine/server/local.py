@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import json
 import mimetypes
 import re
@@ -59,7 +60,12 @@ def _web_root() -> Path:
 
 def public_document(document: dict[str, Any]) -> dict[str, Any]:
     clean = json.loads(json.dumps(document, default=lambda value: None))
-    for asset in clean.get("assets", {}).values():
+    for asset_id, asset in clean.get("assets", {}).items():
+        original_asset = document.get("assets", {}).get(asset_id, {})
+        data = original_asset.get("_bytes")
+        if data is not None and str(asset.get("mimeType", "")).startswith("image/"):
+            encoded = base64.b64encode(bytes(data)).decode("ascii")
+            asset["dataUri"] = f"data:{asset['mimeType']};base64,{encoded}"
         for key in list(asset):
             if key.startswith("_"):
                 del asset[key]
@@ -69,11 +75,25 @@ def public_document(document: dict[str, Any]) -> dict[str, Any]:
 def _restore_private_asset_fields(incoming: dict[str, Any], current: dict[str, Any]) -> dict[str, Any]:
     current_assets = current.get("assets", {})
     for asset_id, asset in incoming.get("assets", {}).items():
+        asset.pop("dataUri", None)
         current_asset = current_assets.get(asset_id, {})
         for key in ("_bytes", "_sourcePath"):
             if key in current_asset and key not in asset:
                 asset[key] = current_asset[key]
     return incoming
+
+
+def _prepare_editor_document(document: dict[str, Any]) -> dict[str, Any]:
+    for node in document.get("nodes", {}).values():
+        if node.get("reason") == "original_overlay":
+            node["name"] = "Source image"
+            node["opacity"] = 1.0
+            node["visible"] = True
+            node["locked"] = False
+        elif node.get("type") == "path" and node.get("provenance", {}).get("stage") == "shape_reconstruction":
+            node["visible"] = False
+            node["opacity"] = 0.35
+    return document
 
 
 def _json_response(handler: BaseHTTPRequestHandler, payload: dict[str, Any], status: int = 200) -> None:
@@ -112,6 +132,7 @@ def _read_uploaded_file(handler: BaseHTTPRequestHandler, upload_dir: Path) -> Pa
     if length > MAX_UPLOAD_BYTES:
         raise ValueError(f"Upload exceeds {MAX_UPLOAD_BYTES // (1024 * 1024)} MB.")
 
+    data = handler.rfile.read(length)
     filename = _safe_upload_name(handler.headers.get("x-sliderefine-filename"))
     suffix = Path(filename).suffix.lower()
     if suffix not in ALLOWED_UPLOAD_SUFFIXES:
@@ -119,7 +140,7 @@ def _read_uploaded_file(handler: BaseHTTPRequestHandler, upload_dir: Path) -> Pa
 
     upload_dir.mkdir(parents=True, exist_ok=True)
     upload_path = upload_dir / f"{secrets.token_hex(4)}-{filename}"
-    upload_path.write_bytes(handler.rfile.read(length))
+    upload_path.write_bytes(data)
     return upload_path
 
 
@@ -141,7 +162,7 @@ class LocalEditorSession:
             document = load_document(document_path)
         else:
             result = convert(input_path, ConversionOptions(ocr_engine="none", skip_text_detection=True))
-            document = result.document
+            document = _prepare_editor_document(result.document)
             document_path = root / "editor.srf"
             save_document(document, document_path)
         return cls(
@@ -279,7 +300,7 @@ class LocalEditorServer:
                                 upload_path,
                                 ConversionOptions(ocr_engine="none", skip_text_detection=True),
                             )
-                            session.document = conversion_result.document
+                            session.document = _prepare_editor_document(conversion_result.document)
                             session.document_path = session.root / "editor.srf"
                             session.save()
                         session.source_path = upload_path
