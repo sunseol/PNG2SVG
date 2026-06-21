@@ -11,11 +11,14 @@
       <aside class="sidebar" aria-label="Slides and layers">
         <div class="brand">SlideRefine</div>
         <div class="toolbar" role="toolbar" aria-label="Document commands">
-          <button id="openSample" type="button">Open</button>
+          <label class="file-button" for="fileInput">Attach</label>
+          <input id="fileInput" class="file-input" type="file" accept=".bmp,.jpeg,.jpg,.png,.pptx,.srf,.tif,.tiff,.webp,image/*" />
+          <button id="openSample" type="button">Sample</button>
           <button id="saveDocument" type="button">Save</button>
           <button id="exportSvg" type="button">SVG</button>
           <button id="exportPng" type="button">PNG</button>
         </div>
+        <div id="fileName" class="file-name" aria-live="polite">sample document</div>
         <label class="field">
           <span>Slide</span>
           <select id="slideSelect"></select>

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from urllib.error import HTTPError
+from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 from sliderefine.server.local import LocalEditorServer, LocalEditorSession
@@ -27,6 +28,21 @@ def request_status(url: str, headers: dict[str, str]) -> int:
             return response.status
     except HTTPError as exc:
         return exc.code
+
+
+def request_upload_json(url: str, token: str, path: Path, filename: str | None = None) -> dict:
+    request = Request(
+        url,
+        data=path.read_bytes(),
+        method="POST",
+        headers={
+            "content-type": "application/octet-stream",
+            "x-sliderefine-token": token,
+            "x-sliderefine-filename": quote(filename or path.name),
+        },
+    )
+    with urlopen(request, timeout=10) as response:
+        return json.loads(response.read().decode("utf-8"))
 
 
 def response_headers(url: str, headers: dict[str, str] | None = None) -> dict[str, str]:
@@ -91,6 +107,60 @@ def test_local_editor_put_preserves_asset_bytes_for_export(fixture_image: Path, 
         )
         assert exported["status"] == "ok"
         assert exported["byteLength"] > 0
+    finally:
+        server.stop()
+
+
+def test_local_editor_import_upload_replaces_current_document(fixture_image: Path, tmp_path: Path):
+    session = LocalEditorSession.from_input(fixture_image, tmp_path)
+    server = LocalEditorServer(session).start()
+    try:
+        base = server.url.split("/index.html", 1)[0]
+        imported = request_upload_json(
+            f"{base}/api/v1/documents/current/import",
+            session.token,
+            fixture_image,
+            "fresh-upload.png",
+        )
+        assert imported["status"] == "ok"
+        assert imported["revision"] == 1
+        assert imported["document"]["assets"]
+        assert imported["sourceName"].endswith("fresh-upload.png")
+
+        exported = request_json(
+            f"{base}/api/v1/documents/current/export",
+            session.token,
+            {"format": "svg"},
+            "POST",
+        )
+        assert exported["status"] == "ok"
+        assert exported["byteLength"] > 0
+    finally:
+        server.stop()
+
+
+def test_local_editor_import_rejects_unsupported_upload(fixture_image: Path, tmp_path: Path):
+    session = LocalEditorSession.from_input(fixture_image, tmp_path)
+    server = LocalEditorServer(session).start()
+    try:
+        base = server.url.split("/index.html", 1)[0]
+        request = Request(
+            f"{base}/api/v1/documents/current/import",
+            data=b"not a supported source",
+            method="POST",
+            headers={
+                "content-type": "application/octet-stream",
+                "x-sliderefine-token": session.token,
+                "x-sliderefine-filename": "notes.txt",
+            },
+        )
+        try:
+            with urlopen(request, timeout=10):
+                raise AssertionError("Unsupported upload should be rejected")
+        except HTTPError as exc:
+            body = json.loads(exc.read().decode("utf-8"))
+            assert exc.code == 400
+            assert body["status"] == "error"
     finally:
         server.stop()
 

@@ -99,6 +99,52 @@
         }
       }
     },
+    "/api/v1/documents/current/import": {
+      "post": {
+        "operationId": "importCurrentDocumentSource",
+        "parameters": [
+          {
+            "name": "x-sliderefine-filename",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "image/png": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Uploaded source imported as the current editable document."
+          },
+          "400": {
+            "description": "Rejected upload."
+          }
+        }
+      }
+    },
     "/api/v1/documents/current/operations": {
       "post": {
         "operationId": "applyCurrentDocumentOperations",

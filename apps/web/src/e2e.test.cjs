@@ -243,10 +243,26 @@ async function waitFor(cdp, expression) {
     cdp = await createCdpClient(pageTarget.webSocketDebuggerUrl);
     await cdp.send("Page.enable");
     await cdp.send("Runtime.enable");
+    await cdp.send("DOM.enable");
     await cdp.send("Page.navigate", { url: appUrl });
 
     await waitFor(cdp, "Boolean(document.querySelector('.slide-canvas'))");
     transcript.push("open");
+
+    if (externalUrl) {
+      const documentTree = await cdp.send("DOM.getDocument");
+      const fileInput = await cdp.send("DOM.querySelector", {
+        nodeId: documentTree.root.nodeId,
+        selector: "#fileInput"
+      });
+      await cdp.send("DOM.setFileInputFiles", {
+        nodeId: fileInput.nodeId,
+        files: [path.join(repoRoot, "tests", "fixtures", "shape-heavy.png")]
+      });
+      await evaluate(cdp, "document.querySelector('#fileInput').dispatchEvent(new Event('change', { bubbles: true }))");
+      await waitFor(cdp, "document.querySelector('#status').textContent.includes('Opened shape-heavy.png')");
+      transcript.push("attach");
+    }
 
     if (!externalUrl) {
       const visibleBeforeFilter = await evaluate(cdp, "document.querySelectorAll('.node').length");

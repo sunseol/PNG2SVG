@@ -59,22 +59,45 @@ body {
 }
 
 button,
+.file-button,
 select,
 input,
 textarea {
   font: inherit;
 }
 
-button {
+button,
+.file-button {
   border: 1px solid #b9c2ce;
   background: #ffffff;
   border-radius: 6px;
   padding: 7px 10px;
   cursor: pointer;
+  line-height: 1.15;
+  min-height: 33px;
+  display: inline-flex;
+  align-items: center;
 }
 
-button:hover {
+button:hover,
+.file-button:hover {
   background: #eef3f7;
+}
+
+.file-input {
+  width: 1px;
+  height: 1px;
+  position: absolute;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.file-name {
+  margin-top: 10px;
+  color: #52606d;
+  font-size: 12px;
+  overflow-wrap: anywhere;
 }
 
 .field {

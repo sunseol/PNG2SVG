@@ -19,6 +19,11 @@ const { pathToFileURL } = require("url");
   }
 
   const core = await import(pathToFileURL(path.join(__dirname, "editor-core.js")).href);
+  const html = fs.readFileSync(path.join(__dirname, "index.html"), "utf8");
+  if (!html.includes('id="fileInput"') || !html.includes('id="fileName"')) {
+    throw new Error("File attach controls are missing from the web studio shell");
+  }
+
   const documentState = core.createSampleDocument();
   const state = core.createEditorState(documentState);
   if (!state.activeSlideId || !documentState.nodes["text-title"]) {

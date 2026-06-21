@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import mimetypes
+import re
 import secrets
 import tempfile
 import threading
@@ -11,7 +12,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 from urllib.request import Request, urlopen
 
 from sliderefine.application.conversion_service import ConversionOptions, convert
@@ -31,6 +32,18 @@ CSP_HEADER = (
     "object-src 'none'; "
     "frame-ancestors 'none'"
 )
+MAX_UPLOAD_BYTES = 50 * 1024 * 1024
+ALLOWED_UPLOAD_SUFFIXES = {
+    ".bmp",
+    ".jpeg",
+    ".jpg",
+    ".png",
+    ".pptx",
+    ".srf",
+    ".tif",
+    ".tiff",
+    ".webp",
+}
 
 
 def _repo_root() -> Path:
@@ -83,6 +96,31 @@ def _security_headers(handler: BaseHTTPRequestHandler) -> None:
 def _read_json(handler: BaseHTTPRequestHandler) -> dict[str, Any]:
     length = int(handler.headers.get("content-length", "0"))
     return json.loads(handler.rfile.read(length).decode("utf-8") or "{}")
+
+
+def _safe_upload_name(value: str | None) -> str:
+    raw_name = unquote(value or "upload")
+    base_name = Path(raw_name).name
+    safe_name = re.sub(r"[^A-Za-z0-9._-]+", "_", base_name).strip("._")
+    return (safe_name or "upload")[:120]
+
+
+def _read_uploaded_file(handler: BaseHTTPRequestHandler, upload_dir: Path) -> Path:
+    length = int(handler.headers.get("content-length", "0") or "0")
+    if length <= 0:
+        raise ValueError("Upload body is empty.")
+    if length > MAX_UPLOAD_BYTES:
+        raise ValueError(f"Upload exceeds {MAX_UPLOAD_BYTES // (1024 * 1024)} MB.")
+
+    filename = _safe_upload_name(handler.headers.get("x-sliderefine-filename"))
+    suffix = Path(filename).suffix.lower()
+    if suffix not in ALLOWED_UPLOAD_SUFFIXES:
+        raise ValueError(f"Unsupported upload type: {suffix or 'none'}")
+
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    upload_path = upload_dir / f"{secrets.token_hex(4)}-{filename}"
+    upload_path.write_bytes(handler.rfile.read(length))
+    return upload_path
 
 
 @dataclass
@@ -231,6 +269,31 @@ class LocalEditorServer:
                     return
                 parsed = urlparse(self.path)
                 try:
+                    if parsed.path == "/api/v1/documents/current/import":
+                        upload_path = _read_uploaded_file(self, session.root / "uploads")
+                        if upload_path.suffix.lower() == ".srf":
+                            session.document = load_document(upload_path)
+                            session.document_path = upload_path
+                        else:
+                            conversion_result = convert(
+                                upload_path,
+                                ConversionOptions(ocr_engine="none", skip_text_detection=True),
+                            )
+                            session.document = conversion_result.document
+                            session.document_path = session.root / "editor.srf"
+                            session.save()
+                        session.source_path = upload_path
+                        _json_response(
+                            self,
+                            {
+                                "status": "ok",
+                                "document": public_document(session.document),
+                                "documentUri": session.document_path.as_uri(),
+                                "revision": session.document["revision"],
+                                "sourceName": upload_path.name,
+                            },
+                        )
+                        return
                     if parsed.path == "/api/v1/documents/current/operations":
                         transaction = _read_json(self)
                         session.document, result = apply_transaction(session.document, transaction)

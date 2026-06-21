@@ -24,6 +24,8 @@ const elements = {
   visibleValue: document.querySelector("#visibleValue"),
   lockedValue: document.querySelector("#lockedValue"),
   status: document.querySelector("#status"),
+  fileInput: document.querySelector("#fileInput"),
+  fileName: document.querySelector("#fileName"),
   overlayOpacity: document.querySelector("#overlayOpacity"),
   confidenceFilter: document.querySelector("#confidenceFilter"),
   confidenceThreshold: document.querySelector("#confidenceThreshold")
@@ -32,6 +34,7 @@ const elements = {
 let state = createEditorState(createSampleDocument());
 let apiToken = new URLSearchParams(window.location.search).get("token") || "";
 let apiAvailable = false;
+let localApiAvailable = false;
 
 async function boot() {
   try {
@@ -39,6 +42,8 @@ async function boot() {
     if (response.ok) {
       state = createEditorState(await response.json());
       apiAvailable = true;
+      localApiAvailable = true;
+      elements.fileName.textContent = "current document";
     }
   } catch {
     state = createEditorState(createSampleDocument());
@@ -50,7 +55,12 @@ async function boot() {
 function bindEvents() {
   document.querySelector("#openSample").addEventListener("click", () => {
     state = createEditorState(createSampleDocument());
+    apiAvailable = false;
+    elements.fileName.textContent = "sample document";
     render();
+  });
+  elements.fileInput.addEventListener("change", () => {
+    void attachFile();
   });
   document.querySelector("#saveDocument").addEventListener("click", saveDocument);
   document.querySelector("#exportSvg").addEventListener("click", () => downloadExport("svg"));
@@ -262,6 +272,41 @@ async function commit(operations) {
   state.undoStack.push(before);
   state.redoStack = [];
   render();
+}
+
+async function attachFile() {
+  const file = elements.fileInput.files?.[0];
+  if (!file) return;
+  if (!localApiAvailable) {
+    renderStatus("File attach requires the local editor API");
+    elements.fileInput.value = "";
+    return;
+  }
+  renderStatus(`Opening ${file.name}`);
+  try {
+    const response = await fetch("/api/v1/documents/current/import", {
+      method: "POST",
+      headers: apiHeaders({
+        "content-type": file.type || "application/octet-stream",
+        "x-sliderefine-filename": encodeURIComponent(file.name)
+      }),
+      body: file
+    });
+    const payload = await response.json();
+    if (!response.ok || payload.status !== "ok") {
+      throw new Error(payload.message || `Import failed: ${response.status}`);
+    }
+    state = createEditorState(payload.document);
+    apiAvailable = true;
+    localApiAvailable = true;
+    elements.fileName.textContent = file.name;
+    render();
+    renderStatus(`Opened ${file.name}`);
+  } catch (error) {
+    renderStatus(error instanceof Error ? error.message : "File attach failed");
+  } finally {
+    elements.fileInput.value = "";
+  }
 }
 
 async function moveSelectionFromInputs() {
