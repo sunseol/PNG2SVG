@@ -172,10 +172,11 @@ function renderLayers() {
     item.dataset.nodeId = nodeId;
     item.setAttribute("aria-selected", String(state.selectedNodeIds.includes(nodeId)));
     if (node.locked) item.dataset.locked = "true";
+    if (node.visible === false) item.dataset.visible = "false";
     const name = document.createElement("span");
     name.textContent = node.name || node.id;
     const type = document.createElement("span");
-    type.textContent = node.locked ? `${node.type} locked` : node.type;
+    type.textContent = [node.type, node.visible === false ? "hidden" : "", node.locked ? "locked" : ""].filter(Boolean).join(" ");
     item.append(name, type);
     elements.layerList.append(item);
   }
@@ -231,6 +232,7 @@ function renderInspector() {
   elements.opacityValue.value = node ? node.opacity ?? 1 : "";
   elements.visibleValue.checked = node ? node.visible !== false : false;
   elements.lockedValue.checked = locked;
+  elements.overlayOpacity.value = String(state.originalOverlayOpacity);
   elements.confidenceFilter.checked = state.confidenceFilterEnabled;
   elements.confidenceThreshold.value = String(state.confidenceThreshold);
 }

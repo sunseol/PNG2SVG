@@ -95,10 +95,15 @@ export function createEditorState(document) {
     selectedNodeIds: [],
     undoStack: [],
     redoStack: [],
-    originalOverlayOpacity: 0.2,
+    originalOverlayOpacity: initialOverlayOpacity(document),
     confidenceFilterEnabled: false,
     confidenceThreshold: 0.8
   };
+}
+
+function initialOverlayOpacity(document) {
+  const sourceImage = Object.values(document.nodes || {}).find((node) => node.reason === "original_overlay");
+  return sourceImage ? Number(sourceImage.opacity ?? 1) : 0.2;
 }
 
 export function nodeTransform(node) {
@@ -360,7 +365,7 @@ export function renderNode(document, node, selected = new Set()) {
   if (node.type === "image") {
     const href = assetHref(document, node);
     if (!href) return "";
-    return `<image ${common} width="${b.width}" height="${b.height}" href="${escapeAttr(href)}"></image>`;
+    return `<image ${common} width="${b.width}" height="${b.height}" href="${escapeAttr(href)}" preserveAspectRatio="xMidYMid meet"></image>`;
   }
   return "";
 }

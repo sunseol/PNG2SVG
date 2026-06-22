@@ -244,6 +244,12 @@ async function waitFor(cdp, expression) {
     await cdp.send("Page.enable");
     await cdp.send("Runtime.enable");
     await cdp.send("DOM.enable");
+    await cdp.send("Emulation.setDeviceMetricsOverride", {
+      width: 1366,
+      height: 900,
+      deviceScaleFactor: 1,
+      mobile: false
+    });
     await cdp.send("Page.navigate", { url: appUrl });
 
     await waitFor(cdp, "Boolean(document.querySelector('.slide-canvas'))");
@@ -261,6 +267,18 @@ async function waitFor(cdp, expression) {
       });
       await evaluate(cdp, "document.querySelector('#fileInput').dispatchEvent(new Event('change', { bubbles: true }))");
       await waitFor(cdp, "document.querySelector('#status').textContent.includes('Opened shape-heavy.png')");
+      const sourceVisible = await evaluate(
+        cdp,
+        `(() => {
+          const image = document.querySelector('.slide-canvas image.node[data-node-type="image"]');
+          const slider = document.querySelector('#overlayOpacity');
+          return Boolean(image)
+            && image.getAttribute('href').startsWith('data:image/png;base64,')
+            && image.getAttribute('opacity') === '1'
+            && slider.value === '1';
+        })()`
+      );
+      if (!sourceVisible) throw new Error("Attached source image is not visible at full opacity");
       transcript.push("attach");
     }
 
