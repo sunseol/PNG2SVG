@@ -267,11 +267,17 @@
           item.className = "summary-item";
           const recommended = slide.recommended_mode || "vector";
           const textCount = (slide.text_candidates || []).length;
-          item.innerHTML = `
-            <div><strong>${slide.name}</strong></div>
-            <div class="meta">Profile: ${getAnalysisProfile(slide)} | Recommended: ${recommended}</div>
-            <div class="meta">Canvas: ${slide.canvas.width} × ${slide.canvas.height} | Text candidates: ${textCount}</div>
-          `;
+          const title = document.createElement("div");
+          const strong = document.createElement("strong");
+          strong.textContent = slide.name || "Untitled slide";
+          title.appendChild(strong);
+          const profile = document.createElement("div");
+          profile.className = "meta";
+          profile.textContent = `Profile: ${getAnalysisProfile(slide)} | Recommended: ${recommended}`;
+          const canvas = document.createElement("div");
+          canvas.className = "meta";
+          canvas.textContent = `Canvas: ${slide.canvas.width} x ${slide.canvas.height} | Text candidates: ${textCount}`;
+          item.append(title, profile, canvas);
           summaryList.appendChild(item);
         }
       }

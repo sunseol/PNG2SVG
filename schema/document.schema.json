@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sliderefine.local/schema/document.schema.json",
+  "title": "SlideRefine Scene Document",
+  "type": "object",
+  "required": ["schemaVersion", "documentId", "revision", "source", "slides", "nodes", "assets", "diagnostics"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "documentId": { "type": "string", "minLength": 1 },
+    "revision": { "type": "integer", "minimum": 1 },
+    "source": { "type": "object" },
+    "slides": { "type": "object" },
+    "nodes": { "type": "object" },
+    "assets": { "type": "object" },
+    "diagnostics": { "type": "array" },
+    "operationLog": { "type": "array" }
+  }
+}

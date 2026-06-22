@@ -1,0 +1,19 @@
+SlideRefine Notice
+==================
+
+SlideRefine is distributed under the license in LICENSE.
+
+Third-party runtime dependencies are tracked in pyproject.toml and in the
+release evidence SBOM at evidence/<git-sha>/supply-chain/sbom.cyclonedx.json.
+The release evidence also includes dependency vulnerability audit output for
+the Python project dependencies and the web package lockfile.
+
+Direct runtime dependencies at this release stage:
+
+- numpy
+- opencv-python-headless
+- Pillow
+
+Web development/test dependency:
+
+- ws

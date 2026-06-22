@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sliderefine.local/schema/export-options.schema.json",
+  "title": "SlideRefine Export Options",
+  "type": "object",
+  "required": ["format"],
+  "additionalProperties": false,
+  "properties": {
+    "format": { "enum": ["svg", "png"] },
+    "slideId": { "type": "string" },
+    "includeGuides": { "type": "boolean" },
+    "scale": { "type": "number", "exclusiveMinimum": 0 }
+  }
+}

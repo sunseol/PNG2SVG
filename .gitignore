@@ -1,8 +1,17 @@
 __pycache__/
 *.py[cod]
+*.egg-info/
 
 .omx/
 tmp/
+.artifacts/
+build/
+dist/
+node_modules/
+apps/web/node_modules/
+apps/web/evidence/
+evidence/*
+!evidence/README.md
 
 .DS_Store
 Thumbs.db

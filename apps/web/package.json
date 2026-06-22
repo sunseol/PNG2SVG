@@ -1,0 +1,12 @@
+{
+  "name": "sliderefine-web",
+  "version": "0.1.0",
+  "private": true,
+  "devDependencies": {
+    "ws": "^8.18.0"
+  },
+  "scripts": {
+    "test": "node src/contract.test.cjs",
+    "test:e2e": "node src/e2e.test.cjs"
+  }
+}

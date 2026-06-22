@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sliderefine.local/schema/conversion-options.schema.json",
+  "title": "SlideRefine Conversion Options",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "colors": { "type": "integer", "minimum": 2, "maximum": 256 },
+    "ocrEngine": { "enum": ["auto", "windows", "none"] },
+    "deterministic": { "type": "boolean" },
+    "maxSlides": { "type": "integer", "minimum": 1 },
+    "maxImagePixels": { "type": "integer", "minimum": 1 },
+    "maxSourceBytes": { "type": "integer", "minimum": 1 },
+    "timeoutMs": { "type": "integer", "minimum": 0 }
+  }
+}

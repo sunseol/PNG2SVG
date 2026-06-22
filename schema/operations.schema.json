@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sliderefine.local/schema/operations.schema.json",
+  "title": "SlideRefine Operation Transaction",
+  "type": "object",
+  "required": ["schemaVersion", "operationId", "expectedRevision", "operations"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "operationId": { "type": "string", "minLength": 1 },
+    "expectedRevision": { "type": "integer", "minimum": 1 },
+    "dryRun": { "type": "boolean" },
+    "operations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}

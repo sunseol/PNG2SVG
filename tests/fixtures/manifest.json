@@ -1,0 +1,43 @@
+{
+  "cases": [
+    {
+      "name": "shape-heavy",
+      "input": "tests/fixtures/shape-heavy.png",
+      "expected": {
+        "conversion": "success",
+        "minimumSlides": 1,
+        "maximumNodes": 50,
+        "maximumPathNodes": 50,
+        "maximumPathCommands": 500,
+        "maximumPathControlPoints": 100,
+        "mustPreserveRasterRegions": true
+      }
+    },
+    {
+      "name": "slides-directory",
+      "input": "tests/fixtures/slides-dir",
+      "expected": {
+        "conversion": "success",
+        "minimumSlides": 2,
+        "maximumNodes": 80,
+        "maximumPathNodes": 80,
+        "maximumPathCommands": 700,
+        "maximumPathControlPoints": 100,
+        "mustPreserveRasterRegions": true
+      }
+    },
+    {
+      "name": "image-backed-pptx",
+      "input": "tests/fixtures/image-backed.pptx",
+      "expected": {
+        "conversion": "success",
+        "minimumSlides": 1,
+        "maximumNodes": 60,
+        "maximumPathNodes": 60,
+        "maximumPathCommands": 600,
+        "maximumPathControlPoints": 100,
+        "mustPreserveRasterRegions": true
+      }
+    }
+  ]
+}
